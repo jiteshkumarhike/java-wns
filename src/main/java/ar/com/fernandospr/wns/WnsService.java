@@ -1,6 +1,7 @@
 package ar.com.fernandospr.wns;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import ar.com.fernandospr.wns.client.WnsClient;
 import ar.com.fernandospr.wns.client.WnsRawResourceBuilder;
@@ -21,6 +22,9 @@ public class WnsService {
 	private WnsResourceBuilder xmlResourceBuilder;
 	private WnsResourceBuilder rawResourceBuilder;
 	
+	public WnsService(){
+		
+	}
 	/**
 	 * @param sid
 	 * @param clientSecret
@@ -58,6 +62,18 @@ public class WnsService {
 	 */
 	public WnsService(String sid, String clientSecret, boolean logging) {
 		this.client = new WnsClient(sid, clientSecret, logging);
+		this.xmlResourceBuilder = new WnsXmlResourceBuilder();
+		this.rawResourceBuilder = new WnsRawResourceBuilder();
+	}
+	
+	/**
+	 * @param sid
+	 * @param clientSecret
+	 * @param proxyProperties
+	 * @param logging true if System.out logging is needed
+	 */
+	 public WnsService(String sid, String clientSecret, WnsProxyProperties proxyProperties, boolean logging, int maxConnections, ExecutorService executor) {
+		this.client = new WnsClient(sid, clientSecret,proxyProperties, logging,maxConnections,executor);
 		this.xmlResourceBuilder = new WnsXmlResourceBuilder();
 		this.rawResourceBuilder = new WnsRawResourceBuilder();
 	}
