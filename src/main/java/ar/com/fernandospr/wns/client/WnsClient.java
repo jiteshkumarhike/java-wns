@@ -2,22 +2,24 @@ package ar.com.fernandospr.wns.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-
 import ar.com.fernandospr.wns.WnsProxyProperties;
-import ar.com.fernandospr.wns.WnsService;
 import ar.com.fernandospr.wns.exceptions.WnsException;
 import ar.com.fernandospr.wns.model.*;
 import ar.com.fernandospr.wns.model.types.WnsNotificationType;
+
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.fasterxml.jackson.jaxrs.xml.JacksonJaxbXMLProvider;
+
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -34,6 +36,7 @@ public class WnsClient {
 	private String clientSecret;
 	private WnsOAuthToken token;
 	private Client client;
+	private ExecutorService executorService;
 	
 	public WnsClient(String sid, String clientSecret, boolean logging) {
 		this.sid = sid;
@@ -50,7 +53,8 @@ public class WnsClient {
 	public WnsClient(String sid, String clientSecret, WnsProxyProperties proxyProps, boolean logging, int maxConnections, ExecutorService executor) {
 		this.sid = sid;
 		this.clientSecret = clientSecret;
-		this.client = createClient(logging, proxyProps, maxConnections, executor);
+		this.client = createClient(logging, proxyProps, maxConnections);
+		this.executorService = executor;
 	}
 	
 	
@@ -82,11 +86,12 @@ public class WnsClient {
         return client;
     }
 	
-	private static Client createClient(boolean logging, WnsProxyProperties proxyProps, int maxConnections, ExecutorService executor) {
+	private static Client createClient(boolean logging, WnsProxyProperties proxyProps, int maxConnections) {
 		ClientConfig clientConfig = new ClientConfig(JacksonJaxbXMLProvider.class, JacksonJsonProvider.class)
         .connectorProvider(new ApacheConnectorProvider());
 		setProxyCredentials(clientConfig, proxyProps);
-		clientConfig.getProperties().put(ClientProperties.ASYNC_THREADPOOL_SIZE,maxConnections);
+		if(maxConnections > 1)
+			clientConfig.getProperties().put(ClientProperties.ASYNC_THREADPOOL_SIZE,maxConnections);
 		Client client = ClientBuilder.newClient(clientConfig);
 		if (logging) {
 		    LoggingFilter loggingFilter = new LoggingFilter(
@@ -151,25 +156,42 @@ public class WnsClient {
 	 * @return WnsNotificationResponse please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
 	 * @throws WnsException when authentication fails
 	 */
-	public WnsNotificationResponse push(WnsResourceBuilder resourceBuilder, String channelUri, WnsAbstractNotification notification, int retriesLeft, WnsNotificationRequestOptional optional) throws WnsException {
-        WebTarget target = client.target(channelUri);
-        Invocation.Builder webResourceBuilder = resourceBuilder.build(target, notification, getToken().access_token, optional);
-        String type = notification.getType().equals(WnsNotificationType.RAW) ? MediaType.APPLICATION_OCTET_STREAM : MediaType.TEXT_XML;
+	public WnsNotificationResponse push(final WnsResourceBuilder resourceBuilder, final String channelUri, final WnsAbstractNotification notification, int retriesLeft, final WnsNotificationRequestOptional optional) throws WnsException {
+		@SuppressWarnings("unchecked")
+		Future future = executorService.submit(new Callable(){
+		    public Object call() throws Exception {
+		    	WebTarget target = client.target(channelUri);
+		        Invocation.Builder webResourceBuilder = resourceBuilder.build(target, notification, getToken().access_token, optional);
+		        String type = notification.getType().equals(WnsNotificationType.RAW) ? MediaType.APPLICATION_OCTET_STREAM : MediaType.TEXT_XML;
 
-        Response response = webResourceBuilder.buildPost(Entity.entity(resourceBuilder.getEntityToSendWithNotification(notification), type)).invoke();
+		        Response response = webResourceBuilder.buildPost(Entity.entity(resourceBuilder.getEntityToSendWithNotification(notification), type)).invoke();
 
-        WnsNotificationResponse notificationResponse = new WnsNotificationResponse(channelUri, response.getStatus(), response.getStringHeaders()    );
-		if (notificationResponse.code == 200) {
-			return notificationResponse;
+		        WnsNotificationResponse notificationResponse = new WnsNotificationResponse(channelUri, response.getStatus(), response.getStringHeaders()    );
+				return notificationResponse;
+				
+		    }
+		});
+		WnsNotificationResponse notificationResponse = null;
+		try {
+			notificationResponse = (WnsNotificationResponse)future.get();
+			System.out.println("future.get() = " + notificationResponse );
+			if(notificationResponse.code == 200)
+				return notificationResponse;
+			if (notificationResponse.code == 401 && retriesLeft > 0) {
+	 			retriesLeft--;
+	 			// Access token may have expired
+	 			refreshAccessToken();
+	 			// Retry
+	 			return this.push(resourceBuilder, channelUri, notification, retriesLeft, optional);
+	 		}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		
-		if (notificationResponse.code == 401 && retriesLeft > 0) {
-			retriesLeft--;
-			// Access token may have expired
-			refreshAccessToken();
-			// Retry
-			return this.push(resourceBuilder, channelUri, notification, retriesLeft, optional);
-		}
 		
 		// Assuming push failed
 		return notificationResponse;
