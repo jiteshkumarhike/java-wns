@@ -44,6 +44,13 @@ public class WnsClient {
 		this.client = createClient(logging);
 	}
 	
+	public WnsClient(String sid, String clientSecret, boolean logging , int maxConnections, ExecutorService executor) {
+		this.sid = sid;
+		this.clientSecret = clientSecret;
+		this.client = createClient(logging, maxConnections);
+		this.executorService = executor;
+	}
+	
 	public WnsClient(String sid, String clientSecret, WnsProxyProperties proxyProps, boolean logging) {
 		this.sid = sid;
 		this.clientSecret = clientSecret;
@@ -71,6 +78,20 @@ public class WnsClient {
         return client;
     }
 
+	private static Client createClient(boolean logging, int maxConnections) {
+        ClientConfig clientConfig = new ClientConfig(JacksonJaxbXMLProvider.class, JacksonJsonProvider.class);
+        Client client = ClientBuilder.newClient(clientConfig);
+        if(maxConnections > 1)
+			clientConfig.getProperties().put(ClientProperties.ASYNC_THREADPOOL_SIZE,maxConnections);
+        if (logging) {
+            LoggingFilter loggingFilter = new LoggingFilter(
+                    Logger.getLogger(WnsClient.class.getName()), true);
+
+            client = client.register(loggingFilter);
+        }
+        return client;
+    }
+	
     private static Client createClient(boolean logging, WnsProxyProperties proxyProps) {
         ClientConfig clientConfig = new ClientConfig(JacksonJaxbXMLProvider.class, JacksonJsonProvider.class)
                 .connectorProvider(new ApacheConnectorProvider());
@@ -174,7 +195,7 @@ public class WnsClient {
 		WnsNotificationResponse notificationResponse = null;
 		try {
 			notificationResponse = (WnsNotificationResponse)future.get();
-			System.out.println("future.get() = " + notificationResponse );
+//			System.out.println("future.get() = " + notificationResponse);
 			if(notificationResponse.code == 200)
 				return notificationResponse;
 			if (notificationResponse.code == 401 && retriesLeft > 0) {

@@ -72,8 +72,8 @@ public class WnsService {
 	 * @param proxyProperties
 	 * @param logging true if System.out logging is needed
 	 */
-	 public WnsService(String sid, String clientSecret, WnsProxyProperties proxyProperties, boolean logging, int maxConnections, ExecutorService executor) {
-		this.client = new WnsClient(sid, clientSecret,proxyProperties, logging,maxConnections,executor);
+	 public WnsService(String sid, String clientSecret, boolean logging, int maxConnections, ExecutorService executor) {
+		this.client = new WnsClient(sid, clientSecret, logging,maxConnections,executor);
 		this.xmlResourceBuilder = new WnsXmlResourceBuilder();
 		this.rawResourceBuilder = new WnsRawResourceBuilder();
 	}
