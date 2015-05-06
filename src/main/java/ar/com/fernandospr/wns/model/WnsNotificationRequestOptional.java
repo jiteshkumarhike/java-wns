@@ -20,6 +20,4 @@ public class WnsNotificationRequestOptional {
 	public String tag;
 	
 	public String ttl;
-	
-	
 }

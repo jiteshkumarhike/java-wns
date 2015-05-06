@@ -57,14 +57,6 @@ public class WnsClient {
 		this.client = createClient(logging, proxyProps);
 	}
 	
-	public WnsClient(String sid, String clientSecret, WnsProxyProperties proxyProps, boolean logging, int maxConnections, ExecutorService executor) {
-		this.sid = sid;
-		this.clientSecret = clientSecret;
-		this.client = createClient(logging, proxyProps, maxConnections);
-		this.executorService = executor;
-	}
-	
-	
 	private static Client createClient(boolean logging) {
         ClientConfig clientConfig = new ClientConfig(JacksonJaxbXMLProvider.class, JacksonJsonProvider.class);
         Client client = ClientBuilder.newClient(clientConfig);
@@ -106,22 +98,6 @@ public class WnsClient {
         }
         return client;
     }
-	
-	private static Client createClient(boolean logging, WnsProxyProperties proxyProps, int maxConnections) {
-		ClientConfig clientConfig = new ClientConfig(JacksonJaxbXMLProvider.class, JacksonJsonProvider.class)
-        .connectorProvider(new ApacheConnectorProvider());
-		setProxyCredentials(clientConfig, proxyProps);
-		if(maxConnections > 1)
-			clientConfig.getProperties().put(ClientProperties.ASYNC_THREADPOOL_SIZE,maxConnections);
-		Client client = ClientBuilder.newClient(clientConfig);
-		if (logging) {
-		    LoggingFilter loggingFilter = new LoggingFilter(
-		            Logger.getLogger(WnsClient.class.getName()), true);
-		
-		    client = client.register(loggingFilter);
-		}
-		return client;
-	}
 	
 	private static void setProxyCredentials(ClientConfig clientConfig, WnsProxyProperties proxyProps) {
         if (proxyProps != null) {

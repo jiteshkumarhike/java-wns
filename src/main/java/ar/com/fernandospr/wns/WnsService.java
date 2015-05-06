@@ -22,9 +22,6 @@ public class WnsService {
 	private WnsResourceBuilder xmlResourceBuilder;
 	private WnsResourceBuilder rawResourceBuilder;
 	
-	public WnsService(){
-		
-	}
 	/**
 	 * @param sid
 	 * @param clientSecret
