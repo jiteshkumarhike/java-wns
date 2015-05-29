@@ -73,8 +73,8 @@ public class WnsClient {
 	private static Client createClient(boolean logging, int maxConnections) {
         ClientConfig clientConfig = new ClientConfig(JacksonJaxbXMLProvider.class, JacksonJsonProvider.class);
         Client client = ClientBuilder.newClient(clientConfig);
-        if(maxConnections > 1)
-			clientConfig.getProperties().put(ClientProperties.ASYNC_THREADPOOL_SIZE,maxConnections);
+        //if(maxConnections > 1)
+			//clientConfig.getProperties().put(ClientProperties.ASYNC_THREADPOOL_SIZE,maxConnections);
         if (logging) {
             LoggingFilter loggingFilter = new LoggingFilter(
                     Logger.getLogger(WnsClient.class.getName()), true);
