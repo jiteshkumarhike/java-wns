@@ -120,14 +120,6 @@ public class WnsClient {
     }
 
 
-    
-
-
-    /**
-     * Based on <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465407.aspx">http://msdn.microsoft.com/en-us/library/windows/apps/hh465407.aspx</a>
-     *
-     * @throws WnsException when authentication fails
-     */
     public void refreshAccessToken() throws WnsException {
         WebTarget target = client.target(AUTHENTICATION_URI);
 
@@ -145,14 +137,6 @@ public class WnsClient {
         this.token = response.readEntity(WnsOAuthToken.class);
     }
 	
-	/**
-	 * @param channelUri
-	 * @param resourceBuilder
-	 * @param notification
-	 * @param retriesLeft to push the notification if the token expires
-	 * @return WnsNotificationResponse please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
-	 * @throws WnsException when authentication fails
-	 */
 	public WnsNotificationResponse push(final WnsResourceBuilder resourceBuilder, final String channelUri, final WnsAbstractNotification notification, int retriesLeft, final WnsNotificationRequestOptional optional) throws WnsException {
 		@SuppressWarnings("unchecked")
 		Future future = executorService.submit(new Callable(){
@@ -201,14 +185,6 @@ public class WnsClient {
 		return this.token;
 	}
 
-	/**
-	 * @param channelUris
-	 * @param resourceBuilder
-	 * @param notification
-	 * @param retriesLeft to push the notification if the token expires
-	 * @return list of WnsNotificationResponse for each channelUri, please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
-	 * @throws WnsException when authentication fails
-	 */
 	public List<WnsNotificationResponse> push(WnsResourceBuilder resourceBuilder, List<String> channelUris, WnsAbstractNotification notification, int retriesLeft, WnsNotificationRequestOptional optional) throws WnsException {
 		List<WnsNotificationResponse> responses = new ArrayList<WnsNotificationResponse>();
 		for (String channelUri : channelUris) {
