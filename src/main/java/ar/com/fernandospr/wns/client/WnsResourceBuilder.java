@@ -6,9 +6,7 @@ import javax.ws.rs.core.MediaType;
 
 import ar.com.fernandospr.wns.model.WnsAbstractNotification;
 import ar.com.fernandospr.wns.model.WnsNotificationRequestOptional;
-import ar.com.fernandospr.wns.model.types.WnsCachePolicyTypeEnum;
 import ar.com.fernandospr.wns.model.types.WnsNotificationType;
-import ar.com.fernandospr.wns.model.types.WnsRequestForStatusTypeEnum;
 
 
 public abstract class WnsResourceBuilder {
@@ -26,10 +24,10 @@ public abstract class WnsResourceBuilder {
 	
 	protected void addOptionalHeaders(Invocation.Builder webResourceBuilder, WnsNotificationRequestOptional optional) {
 		if (optional != null) {
-			if (optional.cachePolicy != WnsCachePolicyTypeEnum.DEFAULT) {
+			if (!emptyString(optional.cachePolicy)) {
 				webResourceBuilder.header("X-WNS-Cache-Policy", optional.cachePolicy);
 			}
-			if (optional.requestForStatus != WnsRequestForStatusTypeEnum.DEFAULT) {
+			if (!emptyString(optional.requestForStatus)) {
 				webResourceBuilder.header("X-WNS-RequestForStatus", optional.requestForStatus);
 			}
 			if (!emptyString(optional.tag)) {
