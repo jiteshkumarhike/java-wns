@@ -1,6 +1,9 @@
 package ar.com.fernandospr.wns;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+
+import javax.ws.rs.core.MultivaluedMap;
 
 import ar.com.fernandospr.wns.client.WnsClient;
 import ar.com.fernandospr.wns.client.WnsRawResourceBuilder;
@@ -16,7 +19,6 @@ import ar.com.fernandospr.wns.model.WnsToast;
 
 public class WnsService {	
 	private int retryPolicy = 5; // By default retry 5 times
-	
 	private WnsClient client;
 	private WnsResourceBuilder xmlResourceBuilder;
 	private WnsResourceBuilder rawResourceBuilder;
@@ -52,9 +54,10 @@ public class WnsService {
 	 
 	 
 	/**
+	 * 
 	 * @param sid
 	 * @param clientSecret
-	 * @param logging true if System.out logging is needed
+	 * @param logging
 	 */
 	public WnsService(String sid, String clientSecret, boolean logging) {
 		this.client = new WnsClient(sid, clientSecret, logging);
@@ -63,46 +66,60 @@ public class WnsService {
 	}
 	
 	/**
-	 * Pushes a tile to channelUri
+	 * 
+	 * @param sid
+	 * @param clientSecret
+	 * @param logging
+	 * @param maxConnections
+	 * @param executor
+	 */
+	 public WnsService(String sid, String clientSecret, boolean logging, int maxConnections, ExecutorService executor) {
+		this.client = new WnsClient(sid, clientSecret, logging,maxConnections,executor);
+		this.xmlResourceBuilder = new WnsXmlResourceBuilder();
+		this.rawResourceBuilder = new WnsRawResourceBuilder();
+	}
+	
+	/**
+	 * 
 	 * @param channelUri
-	 * @param tile which should be built with {@link ar.com.fernandospr.wns.model.builders.WnsTileBuilder}
-	 * @return WnsNotificationResponse please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response"</a>
-	 * @throws WnsException when authentication fails
+	 * @param tile
+	 * @return
+	 * @throws WnsException
 	 */
 	public WnsNotificationResponse pushTile(String channelUri, WnsTile tile) throws WnsException {
 		return this.pushTile(channelUri, null, tile);
 	}
 	
 	/**
-	 * Pushes a tile to channelUri using optional headers
+	 * 
 	 * @param channelUri
 	 * @param optional
-	 * @param tile which should be built with {@link ar.com.fernandospr.wns.model.builders.WnsTileBuilder}
-	 * @return WnsNotificationResponse please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
-	 * @throws WnsException when authentication fails
+	 * @param tile
+	 * @return
+	 * @throws WnsException
 	 */
 	public WnsNotificationResponse pushTile(String channelUri, WnsNotificationRequestOptional optional, WnsTile tile) throws WnsException {
 		return this.client.push(xmlResourceBuilder, channelUri, tile, this.retryPolicy, optional);
 	}
 	
 	/**
-	 * Pushes a tile to channelUris
+	 * 
 	 * @param channelUris
-	 * @param tile which should be built with {@link ar.com.fernandospr.wns.model.builders.WnsTileBuilder}
-	 * @return WnsNotificationResponse please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
-	 * @throws WnsException when authentication fails
+	 * @param tile
+	 * @return
+	 * @throws WnsException
 	 */
 	public List<WnsNotificationResponse> pushTile(List<String> channelUris, WnsTile tile) throws WnsException {
 		return this.pushTile(channelUris, null, tile);
 	}
 	
 	/**
-	 * Pushes a tile to channelUris using optional headers
+	 * 
 	 * @param channelUris
 	 * @param optional
-	 * @param tile which should be built with {@link ar.com.fernandospr.wns.model.builders.WnsTileBuilder}
-	 * @return list of WnsNotificationResponse for each channelUri, please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
-	 * @throws WnsException when authentication fails
+	 * @param tile
+	 * @return
+	 * @throws WnsException
 	 */
 	public List<WnsNotificationResponse> pushTile(List<String> channelUris, WnsNotificationRequestOptional optional, WnsTile tile) throws WnsException {
 		return this.client.push(xmlResourceBuilder, channelUris, tile, this.retryPolicy, optional);
@@ -120,23 +137,23 @@ public class WnsService {
 	}
 	
 	/**
-	 * Pushes a toast to channelUri using optional headers
+	 * 
 	 * @param channelUri
 	 * @param optional
-	 * @param toast which should be built with {@link ar.com.fernandospr.wns.model.builders.WnsToastBuilder}
-	 * @return WnsNotificationResponse please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
-	 * @throws WnsException when authentication fails
+	 * @param toast
+	 * @return
+	 * @throws WnsException
 	 */
 	public WnsNotificationResponse pushToast(String channelUri, WnsNotificationRequestOptional optional, WnsToast toast) throws WnsException {
 		return this.client.push(xmlResourceBuilder, channelUri, toast, this.retryPolicy, optional);
 	}
 	
 	/**
-	 * Pushes a toast to channelUris
+	 * 
 	 * @param channelUris
-	 * @param toast which should be built with {@link ar.com.fernandospr.wns.model.builders.WnsToastBuilder}
-	 * @return list of WnsNotificationResponse for each channelUri, please see response headers from <a href="http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response">http://msdn.microsoft.com/en-us/library/windows/apps/hh465435.aspx#send_notification_response</a>
-	 * @throws WnsException when authentication fails
+	 * @param toast
+	 * @return
+	 * @throws WnsException
 	 */
 	public List<WnsNotificationResponse> pushToast(List<String> channelUris, WnsToast toast) throws WnsException {
 		return this.pushToast(channelUris, null, toast);
@@ -244,5 +261,9 @@ public class WnsService {
 	 */
 	public List<WnsNotificationResponse> pushRaw(List<String> channelUris, WnsNotificationRequestOptional optional, WnsRaw raw) throws WnsException {
 		return this.client.push(rawResourceBuilder, channelUris, raw, this.retryPolicy, optional);
+	}
+	
+	public static void main(String[] args) {
+		
 	}
 }
